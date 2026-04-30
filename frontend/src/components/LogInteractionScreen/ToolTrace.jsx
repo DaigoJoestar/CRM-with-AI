@@ -244,6 +244,18 @@ const ToolTrace = ({ state }) => {
         </div>
       )}
 
+      {/* Medical insights (from medical_context_provider) */}
+      {state.medical_insights_provided && state.medical_insights_provided.length > 0 && (
+        <div style={{ padding: '10px 12px', borderTop: '0.5px solid rgba(0,0,0,0.06)', background: '#fff' }}>
+          <div className="tt-suggestion-label">Medical Insights</div>
+          <div style={{ marginTop: 6 }}>
+            {state.medical_insights_provided.map((pt, idx) => (
+              <div key={idx} className="tt-suggestion-text">{pt}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

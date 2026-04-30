@@ -368,14 +368,33 @@ const ChatInterface = () => {
       };
       setChatHistory(prev => [...prev, aiMessage]);
 
-      if (res.data.interaction_data) {
-        dispatch(setInteraction(res.data.interaction_data));
-        dispatch(setExtracted(
-          Object.keys(res.data.interaction_data).reduce(
-            (acc, key) => ({ ...acc, [key]: true }), {}
-          )
-        ));
-      }
+      // Prefer explicit interaction_data from the backend, but also
+      // merge in top-level `state` fields (next_steps, discussion_topics, etc.)
+      // so medical insights and NBA suggestions are reflected in the UI
+      const interactionData = res.data.interaction_data || {};
+      const returnedState = res.data.state || {};
+
+      const mergedInteraction = {
+        ...interactionData,
+        // overlay common fields that tools may populate directly on state
+        hcp_name: interactionData.hcp_name || returnedState.hcp_name || "",
+        discussion_topics: interactionData.discussion_topics || returnedState.discussion_topics || [],
+        sentiment: interactionData.sentiment || returnedState.sentiment || "Neutral",
+        next_steps: interactionData.next_steps || returnedState.next_steps || "",
+        last_interaction_id: interactionData.id || returnedState.last_interaction_id || returnedState.last_interaction || "",
+        nba_recommendation: returnedState.nba_recommendation || interactionData.nba_recommendation || "",
+        compliance_check: (interactionData.compliance_check !== undefined) ? interactionData.compliance_check : (returnedState.compliance_check !== undefined ? returnedState.compliance_check : true),
+      };
+
+      // Dispatch the merged interaction so the InteractionCard and other UI
+      // components show medical insights and NBA recommendations even when
+      // the backend did not return full `interaction_data`.
+      dispatch(setInteraction(mergedInteraction));
+      dispatch(setExtracted(
+        Object.keys(mergedInteraction).reduce(
+          (acc, key) => ({ ...acc, [key]: true }), {}
+        )
+      ));
     } catch (error) {
       setChatHistory(prev => [...prev, {
         type: "error",
