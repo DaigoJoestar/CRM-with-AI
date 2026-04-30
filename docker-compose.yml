@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: hcp_crm
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5433:5432"
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db/hcp_crm
+      - GROQ_API_KEY=${GROQ_API_KEY}
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"

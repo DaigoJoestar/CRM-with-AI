@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+requests
+pydantic
+pydantic-settings
+langgraph>=0.2.0
+groq
