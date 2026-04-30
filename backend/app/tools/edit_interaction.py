@@ -1,7 +1,26 @@
 import json
+from datetime import datetime, timezone
 from ..core.groq_client import client
 from ..core.database import SessionLocal
 from ..models.interaction import Interaction
+
+
+def parse_date_value(value):
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                try:
+                    return datetime.strptime(value, "%Y-%m-%d")
+                except ValueError:
+                    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc)
+
 
 def edit_interaction(state):
     messages = state.get("messages", [])
@@ -68,10 +87,15 @@ Return ONLY raw JSON. No markdown formatting."""
         action_desc = change_data.get("action_description", f"Updated {field}")
 
         # Apply the change
-        ALLOWED_FIELDS = {'hcp_name', 'discussion_topics', 'sentiment', 'next_steps', 'compliance_check'}
+        ALLOWED_FIELDS = {'hcp_name', 'discussion_topics', 'sentiment', 'next_steps', 'compliance_check', 'interaction_date'}
         if field in ALLOWED_FIELDS and hasattr(recent_interaction, field):
             if field == "discussion_topics" and isinstance(new_value, str):
                 new_value = [topic.strip() for topic in new_value.split(',')]
+            if field == "interaction_date":
+                if not new_value:
+                    new_value = datetime.now(timezone.utc)
+                else:
+                    new_value = parse_date_value(new_value)
             setattr(recent_interaction, field, new_value)
             db.commit()
 

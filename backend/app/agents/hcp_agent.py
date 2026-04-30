@@ -15,6 +15,24 @@ def call_model(state: AgentState):
         else:
             user_text = str(first_message)
 
+    normalized_text = user_text.lower().strip()
+    correction_cues = [
+        "i meant",
+        "actually",
+        "sorry",
+        "instead",
+        "correction",
+        "change that",
+        "fix that",
+        "not this",
+        "this should be",
+        "update that",
+    ]
+
+    if any(cue in normalized_text for cue in correction_cues):
+        state["current_action"] = "edit"
+        return state
+
     # Enhanced action detection with multiple tool support
     prompt = f"""Analyze this message and determine the primary action. Available actions:
 - "log": Log a new interaction from natural language description
@@ -27,6 +45,7 @@ Message: "{user_text}"
 
 Look for:
 - Edit/change keywords: "change", "update", "modify", "correct", "fix"
+- Correction phrases like "I meant", "actually", "sorry", "instead", "correction"
 - Compliance keywords: "check compliance", "validate", "audit"
 - Medical questions: "how does", "what about", "efficacy", "safety", "dosage"
 - NBA requests: "what next", "next steps", "recommendation", "suggestion"
